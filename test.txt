@@ -1,0 +1,37 @@
+int function main() {
+    int x = 5;
+    int y = 6;
+    string hello = "Hello World";
+    log(x + y);
+    log(hello); 
+    int sum = add(x, y);
+    log(sum);
+    if(sum < 15) {
+        log(sum + " is less than 15");
+    }else if(sum > 10) {
+        log(sum + " is greater than 10");
+    }else{
+        log(sum + " is less than 10");
+    }
+    while(sum < 15) {
+        log(sum);
+        sum++;
+    }
+    for(int i = 0; i < sum; i++) {
+        log(i);
+    }
+    int z = 2^2;
+    log(z);
+    int w = x;
+    log(w);
+    w = x++;
+    log(w);
+    int h = x++;
+    log(h);
+    int k = 1++;
+    log(k);
+}
+
+int function add(int arg1, int arg2) {
+    return arg1 + arg2 + 2;
+}
