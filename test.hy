@@ -1,3 +1,5 @@
+import core;
+
 int function main() {
     int x = 5;
     int y = 6;

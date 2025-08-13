@@ -1,57 +1,66 @@
 import { Token } from './tokenizer';
 
+/**
+ * Represents a node in the Abstract Syntax Tree
+ */
 export interface ASTNode {
-    type: string;
-    [key: string]: any;
+    type: string;           // The type of AST node (e.g., "BinaryExpression", "IfStatement")
+    [key: string]: any;     // Additional properties specific to each node type
 }
 
+/**
+ * Root AST structure representing the entire program
+ */
 export interface AST {
-    type: string;
-    start: number;
-    end: number;
-    body: ASTNode[];
+    type: string;           // Always "Program" for the root node
+    start: number;          // Starting line number
+    end: number;            // Ending line number
+    body: ASTNode[];        // Array of top-level statements
 }
 
-// still need to handle
-// ! - not
-// += - plus equals
-// // -= - minus equals
-// // *= - times equals
-// // /= - divide equals
-// // %= - mod equals
-// // ternary operator ? :
+/**
+ * Operator precedence table using Pratt parsing binding powers
+ * Each operator maps to [left_binding_power, right_binding_power]
+ * Higher numbers = higher precedence
+ */
 const BINDING_POWER: Record<string, [number, number]> = {
-    // logical
-    "||": [0, 0.1],
-    "&&": [1, 1.1],
+    // Logical operators (lowest precedence)
+    "||": [0, 0.1],         // Logical OR
+    "&&": [1, 1.1],         // Logical AND
 
-    // equality
-    "==": [2, 2.1],
-    "!=": [2, 2.1],
+    // Equality operators
+    "==": [2, 2.1],         // Equal to
+    "!=": [2, 2.1],         // Not equal to
 
-    // comparison
-    "<": [3, 3.1],
-    "<=": [3, 3.1],
-    ">": [3, 3.1],
-    ">=": [3, 3.1],
+    // Relational operators
+    "<": [3, 3.1],          // Less than
+    "<=": [3, 3.1],         // Less than or equal
+    ">": [3, 3.1],          // Greater than
+    ">=": [3, 3.1],         // Greater than or equal
 
-    // arithmetic
-    "+": [4, 4.1],
-    "-": [4, 4.1],
-    "*": [5, 5.1],
-    "/": [5, 5.1],
-    "%": [5, 5.1],
+    // Arithmetic operators
+    "+": [4, 4.1],          // Addition
+    "-": [4, 4.1],          // Subtraction
+    "*": [5, 5.1],          // Multiplication
+    "/": [5, 5.1],          // Division
+    "%": [5, 5.1],          // Modulo
 
-    // exponentiation
+    // Exponentiation (right-associative)
     "^": [6.1, 6],
 
-    // increment/decrement
-    "++": [7, 7.1],
-    "--": [7, 7.1],
+    // Increment/decrement (highest precedence)
+    "++": [7, 7.1],         // Increment
+    "--": [7, 7.1],         // Decrement
 };
 
+// Global parser state
 let state = { current: 0 };
 
+/**
+ * Main parser function that converts tokens into an Abstract Syntax Tree
+ * @param tokens Array of tokens from the tokenizer
+ * @returns Complete AST representing the program structure
+ */
 export function parse(tokens: Token[]): AST {
     let numOfLines = tokens[tokens.length - 1].line;
 
@@ -62,6 +71,7 @@ export function parse(tokens: Token[]): AST {
         body: []
     }
 
+    // Parse all top-level statements
     for(let i = state.current; i < tokens.length; i++) {
         AST.body.push(parseStatement(tokens));
         i = state.current;
@@ -70,25 +80,22 @@ export function parse(tokens: Token[]): AST {
     return AST;
 }
 
+/**
+ * Parses a single statement and returns corresponding AST node
+ * Handles all statement types: control flow, declarations, and expressions
+ */
 function parseStatement(tokens: Token[]): ASTNode {
     const token = peek(tokens, state);
     if(!token) return {type: "End of File"}
 
-    // Match if statements
+    // Control flow statements
     if(token.type === "keyword" && token.lexeme === "if") return parseIfStatement(tokens, state);
-
-    // Match while loops
     if(token.type === "keyword" && token.lexeme === "while") return parseWhileLoop(tokens, state);
-
-    // Match for loops
     if(token.type === "keyword" && token.lexeme === "for") return parseForLoop(tokens, state);
-
     if(token.type === "keyword" && token.lexeme === "return") return parseReturn(tokens, state);
-
-    // Match break and continue
     if(token.type === "keyword" && (token.lexeme === "break" || token.lexeme === "continue")) return parseControlFlow(tokens, state);
 
-    // Match function declarations and variable declaraion
+    // Declarations (functions and variables)
     if(token.type === "type" && isType(token.lexeme)) {
         const next = peek(tokens, state, 1);
         if(next.type === "keyword" && next.lexeme === "function") {
@@ -98,23 +105,36 @@ function parseStatement(tokens: Token[]): ASTNode {
         }
     }
 
-    // Match expression statements
+    // Expression statements (assignments, function calls, etc.)
     const expr = parseExpression(tokens, state);
-    expect(tokens, state, ";"); // expect semicolon
+    expect(tokens, state, ";");
     return {
         type: "ExpressionStatement",
         expression: expr
     };
 }
 
+// Utility functions for token navigation and validation
+
+/**
+ * Looks ahead at a token without consuming it
+ * @param offset Number of tokens to look ahead (default: 0 for current)
+ */
 function peek(tokens: Token[], state: {current: number}, offset: number = 0): Token {
     return tokens[state.current + offset];
 }
 
+/**
+ * Consumes and returns the current token, advancing the parser state
+ */
 function consume(tokens: Token[], state: {current: number}): Token {
     return tokens[state.current++];
 }
 
+/**
+ * Expects a specific token and consumes it, throwing error if not found
+ * @param expectedType The expected token lexeme
+ */
 function expect(tokens: Token[], state: {current: number}, expectedType: string): Token {
     const token = peek(tokens, state);
     if(!token) throw new Error(`Unexpected end of input, expected '${expectedType}'`);
@@ -124,38 +144,44 @@ function expect(tokens: Token[], state: {current: number}, expectedType: string)
     return consume(tokens, state);
 }
 
+/**
+ * Checks if a string represents a valid data type
+ */
 function isType(word: string): boolean {
     return ["int", "string", "float", "void", "boolean"].includes(word);
 }
 
+// Statement parsing functions
+
+/**
+ * Parses if-else statement with optional else-if chains
+ * Syntax: if (condition) { body } [else if (condition) { body }]* [else { body }]?
+ */
 function parseIfStatement(tokens: Token[], state: {current: number}): ASTNode {
-    // hande if
-    expect(tokens, state, "if"); // consume if
+    expect(tokens, state, "if");
 
-    // Handle condition
-    expect(tokens, state, "("); // consume (
+    // Parse condition
+    expect(tokens, state, "(");
     const condition: any = parseExpression(tokens, state);
-    expect(tokens, state, ")"); // consume )
+    expect(tokens, state, ")");
 
-    // Handle body
-    expect(tokens, state, "{"); // consume {
+    // Parse main body
+    expect(tokens, state, "{");
     const body: any[] = parseBody(tokens, state);
-    expect(tokens, state, "}"); // consume }
+    expect(tokens, state, "}");
 
-    // Handle else if
+    // Parse optional else-if chains
     let elseIf: any[] = [];
     while(peek(tokens, state)?.lexeme === "else if") {
-        expect(tokens, state, "else if"); // consume else if
+        expect(tokens, state, "else if");
 
-        // Handle else if condition
-        expect(tokens, state, "("); // consume (
+        expect(tokens, state, "(");
         const elseIfCondition: any = parseExpression(tokens, state);
-        expect(tokens, state, ")"); // consume )
+        expect(tokens, state, ")");
 
-        // Handle else if body
-        expect(tokens, state, "{"); // consume {
+        expect(tokens, state, "{");
         const elseIfBody: any[] = parseBody(tokens, state);
-        expect(tokens, state, "}"); // consume }
+        expect(tokens, state, "}");
 
         elseIf.push({
             condition: elseIfCondition,
@@ -163,14 +189,13 @@ function parseIfStatement(tokens: Token[], state: {current: number}): ASTNode {
         });
     }
 
-    // Handle else
+    // Parse optional else clause
     let elseBody: any[] = [];
     if(peek(tokens, state)?.lexeme === "else") {
-        // Handle else body
-        expect(tokens, state, "else"); // consume else
-        expect(tokens, state, "{"); // consume {
+        expect(tokens, state, "else");
+        expect(tokens, state, "{");
         elseBody = parseBody(tokens, state);
-        expect(tokens, state, "}"); // consume }
+        expect(tokens, state, "}");
     }
 
     return {
@@ -182,18 +207,22 @@ function parseIfStatement(tokens: Token[], state: {current: number}): ASTNode {
     }
 }
 
+/**
+ * Parses while loop statement
+ * Syntax: while (condition) { body }
+ */
 function parseWhileLoop(tokens: Token[], state: {current: number}): ASTNode {
-    expect(tokens, state, "while"); // consume while
+    expect(tokens, state, "while");
 
-    // Handle condition
-    expect(tokens, state, "("); // consume (
+    // Parse condition
+    expect(tokens, state, "(");
     const condition: any = parseExpression(tokens, state);
-    expect(tokens, state, ")"); // consume )
+    expect(tokens, state, ")");
 
-    // Handle body
-    expect(tokens, state, "{"); // consume {
+    // Parse body
+    expect(tokens, state, "{");
     const body: any[] = parseBody(tokens, state);
-    expect(tokens, state, "}"); // consume }
+    expect(tokens, state, "}");
 
     return {
         type: "WhileLoop",
@@ -202,25 +231,25 @@ function parseWhileLoop(tokens: Token[], state: {current: number}): ASTNode {
     }
 }
 
+/**
+ * Parses for loop statement
+ * Syntax: for (initialization; condition; increment) { body }
+ */
 function parseForLoop(tokens: Token[], state: {current: number}): ASTNode {
-    expect(tokens, state, "for"); // consume for
-    expect(tokens, state, "("); // consume (
+    expect(tokens, state, "for");
+    expect(tokens, state, "(");
 
-    // Handle Initialization
+    // Parse three parts of for loop
     const init = parseVariableDeclaration(tokens, state);
-
-    // Handle Condition
     const condition = parseExpression(tokens, state);
-    expect(tokens, state, ";"); // consume ;
-
-    // Handle Increment
+    expect(tokens, state, ";");
     const increment = parseExpression(tokens, state);
-    expect(tokens, state, ")"); // consume )
+    expect(tokens, state, ")");
 
-    // Handle body
-    expect(tokens, state, "{"); // consume {
+    // Parse body
+    expect(tokens, state, "{");
     const body: any[] = parseBody(tokens, state);
-    expect(tokens, state, "}"); // consume }
+    expect(tokens, state, "}");
 
     return {
         type: "ForLoop",
@@ -231,53 +260,65 @@ function parseForLoop(tokens: Token[], state: {current: number}): ASTNode {
     };
 }
 
+/**
+ * Parses control flow statements (break/continue)
+ * Syntax: break; | continue;
+ */
 function parseControlFlow(tokens: Token[], state: {current: number}): ASTNode {
     const token = peek(tokens, state).lexeme;
-    expect(tokens, state, token); // consume break or continue
-    expect(tokens, state, ";"); // consume ;
+    expect(tokens, state, token);
+    expect(tokens, state, ";");
     
     return {
         type: "ControlFlowStatement",
-        flowType: token // either "break" or "continue"
+        flowType: token
     }
 }
 
+/**
+ * Parses return statement
+ * Syntax: return expression;
+ */
 function parseReturn(tokens: Token[], state: {current: number}): ASTNode {
-    expect(tokens, state, "return"); // consume return
+    expect(tokens, state, "return");
     const value = parseExpression(tokens, state);
-    expect(tokens, state, ";"); // consume ;
+    expect(tokens, state, ";");
     return {
         type: "ReturnStatement",
         value: value
     };
 }
 
+/**
+ * Parses function declaration
+ * Syntax: returnType function name(param1Type param1Name, ...) { body }
+ */
 function parseFunctionDeclaration(tokens: Token[], state: {current: number}): ASTNode {
-    const returnType = consume(tokens, state); // consume return type
+    const returnType = consume(tokens, state);
     if(!isType(returnType.lexeme)) throw new Error(`Expected a valid return type, found '${returnType.lexeme}', at line ${returnType.line}, column ${returnType.column}`);
-    expect(tokens, state, "function") // consume function
-    const functionName = consume(tokens, state); // consume function name
+    expect(tokens, state, "function")
+    const functionName = consume(tokens, state);
     if(functionName.type !== "identifier") throw new Error(`Expected a function name, found '${functionName.lexeme}', at line ${functionName.line}, column ${functionName.column}`);
 
-    // Handle parameters
-    expect(tokens, state, "("); // consume (
+    // Parse parameter list
+    expect(tokens, state, "(");
     const params: any[] = [];
     while(peek(tokens, state)?.lexeme !== ")") {
-        const paramType = consume(tokens, state); // consume parameter type
+        const paramType = consume(tokens, state);
         if(!isType(paramType.lexeme)) throw new Error(`Expected a valid parameter type, found '${paramType.lexeme}', at line ${paramType.line}, column ${paramType.column}`);
 
-        const paramName = consume(tokens, state); // consume parameter name
+        const paramName = consume(tokens, state);
         if(paramName.type !== "identifier") throw new Error(`Expected a parameter name, found '${paramName.lexeme}', at line ${paramName.line}, column ${paramName.column}`);
 
         params.push({dataType: paramType.lexeme, name: paramName.lexeme});
-        if(peek(tokens, state)?.lexeme === ",") expect(tokens, state, ","); // consume ,
+        if(peek(tokens, state)?.lexeme === ",") expect(tokens, state, ",");
     }
-    expect(tokens, state, ")"); // consume )
+    expect(tokens, state, ")");
 
-    // Handle body
-    expect(tokens, state, "{"); // consume {
+    // Parse function body
+    expect(tokens, state, "{");
     const body: any[] = parseBody(tokens, state);
-    expect(tokens, state, "}"); // consume }
+    expect(tokens, state, "}");
 
     return {
         type: "FunctionDeclaration",
@@ -288,14 +329,18 @@ function parseFunctionDeclaration(tokens: Token[], state: {current: number}): AS
     };
 }
 
+/**
+ * Parses variable declaration with initialization
+ * Syntax: type name = expression;
+ */
 function parseVariableDeclaration(tokens: Token[], state: {current: number}): ASTNode {
     const type = consume(tokens, state);
     if(!isType(type.lexeme)) throw new Error(`Expected a valid variable type, found '${type.lexeme}', at line ${type.line}, column ${type.column}`);
     const name = consume(tokens, state);
     if(name.type !== "identifier") throw new Error(`Expected a variable name, found '${name.lexeme}', at line ${name.line}, column ${name.column}`);
-    expect(tokens, state, "="); // consume =
+    expect(tokens, state, "=");
     const value = parseExpression(tokens, state);
-    expect(tokens, state, ";"); // consume ;
+    expect(tokens, state, ";");
     return {
         type: "VariableDeclaration",
         dataType: type.lexeme,
@@ -304,6 +349,9 @@ function parseVariableDeclaration(tokens: Token[], state: {current: number}): AS
     };
 }
 
+/**
+ * Parses a block body (sequence of statements until closing brace)
+ */
 function parseBody(tokens: Token[], state: {current: number}): ASTNode[] {
     let body: any[] = [];
     while(peek(tokens, state)?.lexeme !== "}") {
@@ -312,35 +360,40 @@ function parseBody(tokens: Token[], state: {current: number}): ASTNode[] {
     return body;
 }
 
+/**
+ * Parses expressions using Pratt parsing (operator precedence parsing)
+ * Handles literals, identifiers, function calls, assignments, and binary operations
+ * @param minBP Minimum binding power for operator precedence
+ */
 function parseExpression(tokens: Token[], state: {current: number}, minBP: number = 0): ASTNode {
     let token = consume(tokens, state);
     let left: any;
 
-    // NUD section
-    // Literals
+    // Null Denotation (NUD) - handles prefix expressions and primary expressions
     if(isType(token.type)) {
-        left = {type: "Literal", dateType: token.type, name: token.lexeme};
+        // Literal values
+        left = {type: "Literal", dataType: token.type, name: token.lexeme};
     }
-    // Identifiers and function calls
     else if(token.type === "identifier") {
-        // function calls
+        // Function calls, assignments, or simple identifiers
         if(peek(tokens, state)?.lexeme === "(") {
-            expect(tokens, state, "("); // consume (
+            // Function call: identifier(args...)
+            expect(tokens, state, "(");
             const args: any[] = [];
             while(peek(tokens, state)?.lexeme !== ")") {
                 args.push(parseExpression(tokens, state))
-                if(peek(tokens, state)?.lexeme === ",") expect(tokens, state, ","); // consume ,
+                if(peek(tokens, state)?.lexeme === ",") expect(tokens, state, ",");
             }
-            expect(tokens, state, ")"); // consume )
+            expect(tokens, state, ")");
             left = {
                 type: "FunctionCall",
                 name: token.lexeme,
                 arguments: args
             };
         }
-        // Reassignment
         else if(peek(tokens, state)?.lexeme === "=") {
-            expect(tokens, state, "="); // consume =
+            // Variable assignment: identifier = expression
+            expect(tokens, state, "=");
             const value = parseExpression(tokens, state);
             left = {
                 type: "AssignmentExpression",
@@ -349,18 +402,18 @@ function parseExpression(tokens: Token[], state: {current: number}, minBP: numbe
                 right: value
             };
         }
-        // identifiers
         else{
+            // Simple identifier reference
             left = {type: "Identifier", name: token.lexeme};
         }
     }
-    // Parentheses
     else if(token.lexeme === "(") {
-        left = parseExpression(tokens, state); // parse inside parens
-        expect(tokens, state, ")"); // consume )
+        // Parenthesized expression
+        left = parseExpression(tokens, state);
+        expect(tokens, state, ")");
     }
-    // Prefix ++ / --
     else if(token.type === "operator" && (token.lexeme === "++" || token.lexeme === "--")) {
+        // Prefix increment/decrement
         const op = token.lexeme;
         const argument = parseExpression(tokens, state, BINDING_POWER[op][1]);
         left = {
@@ -370,20 +423,18 @@ function parseExpression(tokens: Token[], state: {current: number}, minBP: numbe
             prefix: true
         };
     }
-    // Unknown token
     else{
         throw new Error(`Unexpected token: ${token.lexeme}`);
     }
 
-    // LED section
-    // infix/postfix loop
+    // Left Denotation (LED) - handles infix and postfix expressions
     while(true) {
         const op = peek(tokens, state);
         if(!op || !(op.lexeme in BINDING_POWER)) break;
 
-        // Postfix ++/--
+        // Postfix increment/decrement
         if(op.lexeme === "++" || op.lexeme === "--") {
-            expect(tokens, state, op.lexeme); // consume operator
+            expect(tokens, state, op.lexeme);
             left = {
                 type: "UnaryExpression",
                 operator: op.lexeme,
@@ -393,10 +444,12 @@ function parseExpression(tokens: Token[], state: {current: number}, minBP: numbe
             continue;
         }
 
+        // Check binding power for operator precedence
         const [leftBP, rightBP] = BINDING_POWER[op.lexeme] || [0,0];
         if(leftBP < minBP) break;
         
-        expect(tokens, state, op.lexeme); // consume operator
+        // Binary operations
+        expect(tokens, state, op.lexeme);
         const right = parseExpression(tokens, state, rightBP);
 
         left = {
