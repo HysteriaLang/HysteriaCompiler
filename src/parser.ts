@@ -85,6 +85,9 @@ function parseStatement(tokens: Token[]): ASTNode {
 
     if(token.type === "keyword" && token.lexeme === "return") return parseReturn(tokens, state);
 
+    // Match break and continue
+    if(token.type === "keyword" && (token.lexeme === "break" || token.lexeme === "continue")) return parseControlFlow(tokens, state);
+
     // Match function declarations and variable declaraion
     if(token.type === "type" && isType(token.lexeme)) {
         const next = peek(tokens, state, 1);
@@ -122,7 +125,7 @@ function expect(tokens: Token[], state: {current: number}, expectedType: string)
 }
 
 function isType(word: string): boolean {
-    return ["int", "string", "float", "void", "bool"].includes(word);
+    return ["int", "string", "float", "void", "boolean"].includes(word);
 }
 
 function parseIfStatement(tokens: Token[], state: {current: number}): ASTNode {
@@ -226,6 +229,17 @@ function parseForLoop(tokens: Token[], state: {current: number}): ASTNode {
         increment: increment,
         body: body
     };
+}
+
+function parseControlFlow(tokens: Token[], state: {current: number}): ASTNode {
+    const token = peek(tokens, state).lexeme;
+    expect(tokens, state, token); // consume break or continue
+    expect(tokens, state, ";"); // consume ;
+    
+    return {
+        type: "ControlFlowStatement",
+        flowType: token // either "break" or "continue"
+    }
 }
 
 function parseReturn(tokens: Token[], state: {current: number}): ASTNode {

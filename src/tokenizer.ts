@@ -136,16 +136,16 @@ function finalizeToken(): void {
         charArr = [];
         return;
     }
-    if(/^(function|return|if|else|for|while)$/.test(token)) {
+    if(/^(function|return|if|else|for|while|break|continue)$/.test(token)) {
         addToken(token, "keyword", line, startOfToken);
     }else if(/^(int|string|boolean|float|char|void|null)$/.test(token)) {
         addToken(token, "type", line, startOfToken);
+    }else if(/^(true|false)$/.test(token)) {
+        addToken(token, "boolean", line, startOfToken);
     }else if(/^[A-Za-z_][A-Za-z0-9_]*$/.test(token)) {
         addToken(token, "identifier", line, startOfToken);
     }else if(/^-?\d+$/.test(token)) {
         addToken(token, "int", line, startOfToken);
-    }else if(/^(true|false)$/.test(token)) {
-        addToken(token, "boolean", line, startOfToken);
     }
     charArr = [];
 }
