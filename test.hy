@@ -1,69 +1,44 @@
-import core;
-
 int function main() {
     int x = 5;
     int y = 6;
+    int z = x;
     string hello = "Hello World";
-    log(x + y);
-    log(hello); 
     int sum = add(x, y);
-    log(sum);
-    if(sum < 15) {
-        log(sum + " is less than 15");
-    }else if(sum > 10) {
-        log(sum + " is greater than 10");
-    }else if(sum > 5) {
-        log(sum + " is greater than 5");
-    }else{
-        log(sum + " is less than 5");
-    }
     while(sum < 15) {
-        log(sum);
-        if(sum < 12) {
-            sum++;
-            continue;
+        if(sum > 13) {
+            break;
+        }
+        sum = sum + 1;
+    }
+    for(int i = 0; i < 15; i++) {
+        if(sum > 12) {
+            break;
         }else{
-            break;
+            continue;
         }
-    }
-    for(int i = 0; i < sum; i++) {
-        log(i);
-        if(i == 10) {
-            break;
-        }
-    }
-    if(true || false) {
-        log("Always True");
-    }
-    if(true && false) {
-        log("How");
-    }else{
-        log("Always Runs");
     }
     boolean bool = true;
     while(bool) {
-        log("will run once");
-        bool = false;
+        if(bool) {
+            bool = false;
+        }else{
+            continue;
+        }
     }
-    int z = 2^2;
-    log(z);
-    int w = x;
-    log(w);
-    w = x++;
-    log(w);
-    int h = x++;
-    log(h);
-    int k = 1++;
-    log(k);
-    sum = add(add(x, z), y);
-    log(sum);
-    int n = 2 + add(z, h);
-    log(n);
-    int t = add(w, n) + 2;
-    log(t);
-    int q = add(x, y) + add(x, y);
+    x = 2;
+    int w = x + y;
+    sum = add(add(x, y), w);
+    if(sum > 15) {
+        hello = "this is greater than 15";
+    }else if(sum > 10) {
+        hello = "this is greater than 10";
+    }else if(sum > 5) {
+        hello = "this is greater than 5";
+    }else{
+        hello = "this is less than 5";
+    }
 }
 
-int function add(int arg1, int arg2) {
-    return arg1 + arg2 + 2;
+int function add(int x, int y) {
+    return x + y;
 }

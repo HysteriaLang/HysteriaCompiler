@@ -243,7 +243,7 @@ function parseForLoop(tokens: Token[], state: {current: number}): ASTNode {
     const init = parseVariableDeclaration(tokens, state);
     const condition = parseExpression(tokens, state);
     expect(tokens, state, ";");
-    const increment = parseExpression(tokens, state);
+    const update = parseExpression(tokens, state);
     expect(tokens, state, ")");
 
     // Parse body
@@ -255,7 +255,7 @@ function parseForLoop(tokens: Token[], state: {current: number}): ASTNode {
         type: "ForLoop",
         initialization: init,
         condition: condition,
-        increment: increment,
+        update: update,
         body: body
     };
 }

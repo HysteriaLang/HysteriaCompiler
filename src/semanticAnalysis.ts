@@ -334,10 +334,10 @@ function checkForLoop(node: ASTNode, scope: Scope) {
     checkCondition(node, scope);
 
     // Validate increment is a unary expression (++ or --)
-    if(node.increment.type !== "UnaryExpression") throw new Error(`For loop must have an increment or decrement (Unary Expression), got ${node.increment.type}`);
-    if(node.increment.operator !== "++" && node.increment.operator !== "--") throw new Error(`For loop increment must be '++' or '--', got ${node.increment.operator}`);
-    const incrementType = checkExpression(node.increment, scope);
-    if(incrementType !== "int" && incrementType !== "float") throw new Error(`For loop increment must be numeric, got ${incrementType}`);
+    if(node.update.type !== "UnaryExpression") throw new Error(`For loop must have an increment or decrement (Unary Expression), got ${node.update.type}`);
+    if(node.update.operator !== "++" && node.update.operator !== "--") throw new Error(`For loop increment must be '++' or '--', got ${node.update.operator}`);
+    const updateType = checkExpression(node.update, scope);
+    if(updateType !== "int" && updateType !== "float") throw new Error(`For loop increment must be numeric, got ${updateType}`);
     
     checkBody(node.body, scope, "for");
     contextStack.pop();
