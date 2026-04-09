@@ -1,7 +1,7 @@
-import { tokenizer } from "./tokenizer"
-import { parse } from "./parser";
-import { analyze } from "./semanticAnalysis";
-import { generateIR } from "./IR";
+import { tokenizer } from "./Lexer/tokenizer"
+import { parse } from "./Parser/parser";
+import { analyze } from "./IR/semanticAnalysis";
+import { generateIR } from "./IR/IR";
 
 const tokens = tokenizer("test.hy");
 const ast = parse(tokens);

@@ -1,4 +1,4 @@
-import { AST, ASTNode } from './parser';
+import { AST, ASTNode } from '../types'
 
 /**
  * Semantic Analysis Module

@@ -1,14 +1,5 @@
 import fs from "fs";
-
-/**
- * Represents a lexical token with its value, type, and position information
- */
-export interface Token {
-    lexeme: string;    // The actual text of the token
-    type: string;      // The token type (keyword, identifier, operator, etc.)
-    line: number;      // Line number where the token appears
-    column: number;    // Column number where the token starts
-}
+import { Token } from '../types'
 
 // Global tokenizer state
 let tokens: Token[] = [];          // Array to store all generated tokens

@@ -1,22 +1,4 @@
-import { Token } from './tokenizer';
-
-/**
- * Represents a node in the Abstract Syntax Tree
- */
-export interface ASTNode {
-    type: string;           // The type of AST node (e.g., "BinaryExpression", "IfStatement")
-    [key: string]: any;     // Additional properties specific to each node type
-}
-
-/**
- * Root AST structure representing the entire program
- */
-export interface AST {
-    type: string;           // Always "Program" for the root node
-    start: number;          // Starting line number
-    end: number;            // Ending line number
-    body: ASTNode[];        // Array of top-level statements
-}
+import {Token, AST, ASTNode} from '../types'
 
 /**
  * Operator precedence table using Pratt parsing binding powers
